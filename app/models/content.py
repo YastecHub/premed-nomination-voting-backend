@@ -23,6 +23,14 @@ def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _as_utc(dt: Optional[datetime]) -> Optional[datetime]:
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
 # ---------------------------------------------------------------------------
 # Document: categories
 # ---------------------------------------------------------------------------
@@ -66,8 +74,10 @@ class Category(Document):
         if self.nomination_force_closed:
             return False
         now = _utcnow()
-        if self.nomination_open_at and self.nomination_close_at:
-            return self.nomination_open_at <= now <= self.nomination_close_at
+        open_at = _as_utc(self.nomination_open_at)
+        close_at = _as_utc(self.nomination_close_at)
+        if open_at and close_at:
+            return open_at <= now <= close_at
         return False
 
     @property
@@ -75,8 +85,10 @@ class Category(Document):
         if self.voting_force_closed or not self.ballot_published:
             return False
         now = _utcnow()
-        if self.voting_open_at and self.voting_close_at:
-            return self.voting_open_at <= now <= self.voting_close_at
+        open_at = _as_utc(self.voting_open_at)
+        close_at = _as_utc(self.voting_close_at)
+        if open_at and close_at:
+            return open_at <= now <= close_at
         return False
 
 
